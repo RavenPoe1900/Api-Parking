@@ -86,3 +86,18 @@ export function averageSwagger<TModel extends Type<any>>(
     },
   };
 }
+
+export function genericSwagger<TModel extends Type<any>>(
+  model: TModel,
+  summary: string,
+  description: string,
+) {
+  return {
+    apiOperation: { summary: summary },
+    apiResponse: {
+      status: 200,
+      description: description,
+      type: model,
+    },
+  };
+}

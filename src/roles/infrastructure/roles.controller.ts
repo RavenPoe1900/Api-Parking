@@ -27,6 +27,7 @@ import { UpdateRoleDto } from '../domain/update-role.dto';
 import { RequestWithUser } from 'src/_shared/domain/type/requestWithUser.type';
 import { PaginationRoleDto } from '../domain/pagination-role.dto';
 import { IsNull } from 'typeorm';
+import { Roles } from 'src/_shared/auth/domain/roles.decorator';
 
 const controllerName = 'Roles';
 
@@ -35,13 +36,14 @@ const controllerName = 'Roles';
   path: 'roles/',
   version: '1',
 })
+@Roles('admin')
 export class RolesController {
   constructor(private readonly rolesService: RolesService) {}
 
   /**
-   * Crea un nuevo rol.
-   * @param createRoleDto Los datos para crear el rol.
-   * @returns El rol creado.
+   * Creates a new role.
+   * @param createRoleDto The data to create the role.
+   * @returns The created role.
    */
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -50,32 +52,26 @@ export class RolesController {
     @Body() createRoleDto: CreateRoleDto,
     @Request() req: RequestWithUser,
   ): Promise<ResponseRoleDto | ResponseRoleDto[] | undefined> {
-    return this.rolesService.create(
-      createRoleDto,
-      1,
-      1,
-      // req.user.id,
-      // req.user.parkingId,
-    );
+    return this.rolesService.create(createRoleDto, {
+      userId: req.user.userId,
+      parkingId: req.user.parkingId,
+    });
   }
 
   /**
-   * Obtiene todos los roles con filtros opcionales.
-   * @returns Una lista de roles.
+   * Retrieves all roles with optional filters.
+   * @returns A list of roles.
    */
   @Get()
   @HttpCode(HttpStatus.OK)
   @ApiResponseSwagger(findSwagger(ResponseRoleDto, controllerName))
   async findAll(
     @Query() pagination: PaginationRoleDto,
-    @Request() req: RequestWithUser,
   ): Promise<ResponseRoleDto[] | undefined> {
     return this.rolesService.findAll({
       skip: pagination.page,
       take: pagination.perPage,
       where: {
-        // parkingId: req.user.parkingId,
-        parkingId: 1,
         deletedBy: IsNull(),
         deletedAt: IsNull(),
       },
@@ -83,9 +79,9 @@ export class RolesController {
   }
 
   /**
-   * Obtiene un rol por su ID.
-   * @param id El ID del rol.
-   * @returns El rol encontrado o null si no existe.
+   * Retrieves a role by its ID.
+   * @param id The ID of the role.
+   * @returns The found role or null if it does not exist.
    */
   @Get(':id')
   @HttpCode(HttpStatus.OK)
@@ -94,14 +90,14 @@ export class RolesController {
     @Param('id') id: number,
     @Request() req: RequestWithUser,
   ): Promise<ResponseRoleDto | null | undefined> {
-    return this.rolesService.findOneById(id, req.user.parkingId);
+    return this.rolesService.findOneById(id, req.user.parkingId, true);
   }
 
   /**
-   * Actualiza un rol existente.
-   * @param id El ID del rol a actualizar.
-   * @param updateRoleDto Los datos para actualizar el rol.
-   * @returns El rol actualizado.
+   * Updates an existing role.
+   * @param id The ID of the role to update.
+   * @param updateRoleDto The data to update the role.
+   * @returns The updated role.
    */
   @Patch(':id')
   @HttpCode(HttpStatus.ACCEPTED)
@@ -111,20 +107,16 @@ export class RolesController {
     @Body() updateRoleDto: UpdateRoleDto,
     @Request() req: RequestWithUser,
   ): Promise<ResponseRoleDto | null | undefined> {
-    return this.rolesService.update(
-      id,
-      updateRoleDto,
-      1,
-      1,
-      // req.user.id ? req.user.id : 1,
-      // req.user.parkingId ? req.user.parkingId : 1,
-    );
+    return this.rolesService.update(id, updateRoleDto, {
+      userId: req.user.userId,
+      parkingId: req.user.parkingId,
+    });
   }
 
   /**
-   * Elimina un rol (soft delete).
-   * @param id El ID del rol a eliminar.
-   * @returns El rol eliminado.
+   * Soft deletes a role.
+   * @param id The ID of the role to delete.
+   * @returns The soft-deleted role.
    */
   @Delete(':id')
   @HttpCode(HttpStatus.ACCEPTED)
@@ -133,12 +125,9 @@ export class RolesController {
     @Param('id') id: number,
     @Request() req: RequestWithUser,
   ): Promise<ResponseRoleDto | null | undefined> {
-    return this.rolesService.softDelete(
-      id,
-      1,
-      1,
-      // req.user.id ? req.user.id : 1,
-      // req.user.parkingId ? req.user.parkingId : 1,
-    );
+    return this.rolesService.softDelete(id, {
+      userId: req.user.userId,
+      parkingId: req.user.parkingId,
+    });
   }
 }

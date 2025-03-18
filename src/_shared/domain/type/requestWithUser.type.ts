@@ -1,5 +1,5 @@
-import { Payload } from '../interface/payload.interface';
+import { IPayload } from '../interface/payload.interface';
 
 export type RequestWithUser = Request & {
-  user: Payload;
+  user: IPayload;
 };

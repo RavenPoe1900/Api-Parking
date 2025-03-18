@@ -1,7 +1,7 @@
 import { Column, CreateDateColumn, PrimaryGeneratedColumn } from 'typeorm';
-import { BaseTInterface } from './baseT.interface';
+import { IBaseT } from './baseT.interface';
 
-export class BaseEntityInterface implements BaseTInterface {
+export class IBaseEntity implements IBaseT {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -14,7 +14,7 @@ export class BaseEntityInterface implements BaseTInterface {
   @Column({ nullable: true })
   createdBy: number;
 
-  @Column()
+  @Column({ nullable: true })
   parkingId: number;
 
   @Column({ nullable: true })

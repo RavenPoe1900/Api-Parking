@@ -1,6 +1,6 @@
 import { ObjectLiteral } from 'typeorm';
 
-export interface BaseTInterface extends ObjectLiteral {
+export interface IBaseT extends ObjectLiteral {
   id: number;
   parkingId: number;
   createdAt: Date;
