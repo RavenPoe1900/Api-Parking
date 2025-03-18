@@ -1,21 +1,20 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { CreateRoleDto } from './create-role.dto';
 import { IsInt, IsNotEmpty, IsNumber, Min } from 'class-validator';
-import { Role } from './role.entity';
+import { User } from './user.entity';
+import { CreateUserDto } from './create-user.dto';
 
-type RoleContract = Omit<
-  Role,
-  | 'users'
-  | 'name'
+type UserContract = Omit<
+  User,
   | 'createdAt'
   | 'updatedAt'
   | 'createdBy'
   | 'updatedBy'
   | 'deletedAt'
   | 'deletedBy'
+  | 'role'
 >;
 
-export class ResponseRoleDto extends CreateRoleDto implements RoleContract {
+export class ResponseUserDto extends CreateUserDto implements UserContract {
   @ApiProperty({
     description: 'Unique ID of the resource',
     example: 1,
