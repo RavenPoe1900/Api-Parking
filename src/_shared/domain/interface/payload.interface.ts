@@ -1,4 +1,4 @@
-export interface Payload {
-  id: number;
+export interface IPayload {
+  userId: number;
   parkingId: number;
 }

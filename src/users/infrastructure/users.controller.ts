@@ -27,6 +27,7 @@ import { UpdateUserDto } from '../domain/update-user.dto';
 import { RequestWithUser } from 'src/_shared/domain/type/requestWithUser.type';
 import { PaginationUserDto } from '../domain/pagination-user.dto';
 import { IsNull } from 'typeorm';
+import { Roles } from 'src/_shared/auth/domain/roles.decorator';
 
 const controllerName = 'Users';
 
@@ -35,13 +36,15 @@ const controllerName = 'Users';
   path: 'users/',
   version: '1',
 })
+@Roles('admin')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   /**
-   * Crea un nuevo rol.
-   * @param createUserDto Los datos para crear el rol.
-   * @returns El rol creado.
+   * Creates a new user.
+   * @param createUserDto Data required to create the user.
+   * @param req Request object containing user context.
+   * @returns The created user.
    */
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -50,18 +53,17 @@ export class UsersController {
     @Body() createUserDto: CreateUserDto,
     @Request() req: RequestWithUser,
   ): Promise<ResponseUserDto | ResponseUserDto[] | undefined> {
-    return this.usersService.create(
-      createUserDto,
-      1,
-      1,
-      // req.user.id,
-      // req.user.parkingId,
-    );
+    return this.usersService.create(createUserDto, {
+      userId: req.user.userId,
+      parkingId: req.user.parkingId,
+    });
   }
 
   /**
-   * Obtiene todos los users con filtros opcionales.
-   * @returns Una lista de users.
+   * Retrieves all users with optional filters.
+   * @param pagination Pagination options (page, perPage).
+   * @param req Request object containing user context.
+   * @returns A list of users.
    */
   @Get()
   @HttpCode(HttpStatus.OK)
@@ -74,8 +76,7 @@ export class UsersController {
       skip: pagination.page,
       take: pagination.perPage,
       where: {
-        // parkingId: req.user.parkingId,
-        parkingId: 1,
+        parkingId: req.user.parkingId,
         deletedBy: IsNull(),
         deletedAt: IsNull(),
       },
@@ -83,9 +84,10 @@ export class UsersController {
   }
 
   /**
-   * Obtiene un rol por su ID.
-   * @param id El ID del rol.
-   * @returns El rol encontrado o null si no existe.
+   * Retrieves a user by its ID.
+   * @param id The unique identifier of the user.
+   * @param req Request object containing user context.
+   * @returns The found user or null if it does not exist.
    */
   @Get(':id')
   @HttpCode(HttpStatus.OK)
@@ -94,14 +96,15 @@ export class UsersController {
     @Param('id') id: number,
     @Request() req: RequestWithUser,
   ): Promise<ResponseUserDto | null | undefined> {
-    return this.usersService.findOneById(id, req.user.parkingId);
+    return this.usersService.findOneById(id, req.user.parkingId, true);
   }
 
   /**
-   * Actualiza un rol existente.
-   * @param id El ID del rol a actualizar.
-   * @param updateUserDto Los datos para actualizar el rol.
-   * @returns El rol actualizado.
+   * Updates an existing user.
+   * @param id The unique identifier of the user to update.
+   * @param updateUserDto Data required to update the user.
+   * @param req Request object containing user context.
+   * @returns The updated user.
    */
   @Patch(':id')
   @HttpCode(HttpStatus.ACCEPTED)
@@ -111,20 +114,17 @@ export class UsersController {
     @Body() updateUserDto: UpdateUserDto,
     @Request() req: RequestWithUser,
   ): Promise<ResponseUserDto | null | undefined> {
-    return this.usersService.update(
-      id,
-      updateUserDto,
-      1,
-      1,
-      // req.user.id ? req.user.id : 1,
-      // req.user.parkingId ? req.user.parkingId : 1,
-    );
+    return this.usersService.update(id, updateUserDto, {
+      userId: req.user.userId,
+      parkingId: req.user.parkingId,
+    });
   }
 
   /**
-   * Elimina un rol (soft delete).
-   * @param id El ID del rol a eliminar.
-   * @returns El rol eliminado.
+   * Soft deletes a user (marks it as deleted without removing it from the database).
+   * @param id The unique identifier of the user to delete.
+   * @param req Request object containing user context.
+   * @returns The soft-deleted user.
    */
   @Delete(':id')
   @HttpCode(HttpStatus.ACCEPTED)
@@ -133,12 +133,9 @@ export class UsersController {
     @Param('id') id: number,
     @Request() req: RequestWithUser,
   ): Promise<ResponseUserDto | null | undefined> {
-    return this.usersService.softDelete(
-      id,
-      1,
-      1,
-      // req.user.id ? req.user.id : 1,
-      // req.user.parkingId ? req.user.parkingId : 1,
-    );
+    return this.usersService.softDelete(id, {
+      userId: req.user.userId,
+      parkingId: req.user.parkingId,
+    });
   }
 }

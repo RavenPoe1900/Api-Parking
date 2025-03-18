@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsInt, IsNotEmpty, IsNumber, Min } from 'class-validator';
 import { User } from './user.entity';
 import { CreateUserDto } from './create-user.dto';
+import { Expose } from 'class-transformer';
 
 type UserContract = Omit<
   User,
@@ -15,6 +16,7 @@ type UserContract = Omit<
 >;
 
 export class ResponseUserDto extends CreateUserDto implements UserContract {
+  @Expose()
   @ApiProperty({
     description: 'Unique ID of the resource',
     example: 1,
@@ -35,6 +37,7 @@ export class ResponseUserDto extends CreateUserDto implements UserContract {
     minimum: 1,
     type: Number,
   })
+  @Expose()
   @IsInt()
   @Min(1)
   @IsNotEmpty()

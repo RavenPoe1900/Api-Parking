@@ -10,17 +10,20 @@ import {
   QueryFailedError,
   IsNull,
   FindOptionsWhere,
+  FindOneOptions,
 } from 'typeorm';
-import { BaseTInterface } from '../domain/interface/baseT.interface';
+import { IBaseT } from '../domain/interface/baseT.interface';
+import { IUserParking } from '../domain/interface/userParking.interface';
 
 @Injectable()
-export abstract class BaseService<T extends BaseTInterface> {
+export abstract class BaseService<T extends IBaseT> {
   constructor(private readonly repository: Repository<T>) {}
+
   /**
-   * Genera un objeto `FindOptionsWhere` para usar como filtro en consultas TypeORM.
-   * @param id El ID del registro a filtrar.
-   * @param parkingId El ID del estacionamiento asociado.
-   * @returns Un objeto `FindOptionsWhere` con las condiciones especificadas.
+   * Generates a `FindOptionsWhere` object to use as a filter in TypeORM queries.
+   * @param id The ID of the record to filter.
+   * @param parkingId The ID of the associated parking.
+   * @returns A `FindOptionsWhere` object with the specified conditions.
    */
   protected generateWhereFilter(
     id: number,
@@ -33,145 +36,175 @@ export abstract class BaseService<T extends BaseTInterface> {
       parkingId: parkingId as any,
     };
   }
+
   /**
-   * Crea un nuevo registro.
-   * @param createDto Los datos para crear el registro.
-   * @param userId ID del usuario que crea el registro.
-   * @param parkingId ID del estacionamiento asociado.
-   * @returns El registro creado.
+   * Creates a new record.
+   * @param createDto The data to create the record.
+   * @param userPerking User and parking information (userId, parkingId).
+   * @returns The created record.
    */
   async create(
     createDto: DeepPartial<T>,
-    userId: number,
-    parkingId: number,
+    userPerking: IUserParking,
   ): Promise<T | T[] | undefined> {
     try {
-      createDto.createdBy = userId;
-      createDto.parkingId = parkingId;
+      createDto.createdBy = userPerking.userId;
+      createDto.parkingId = userPerking.parkingId;
       const entity = this.repository.create(createDto as any);
       return await this.repository.save(entity);
     } catch (error) {
-      this.handleError(error, 'Error al crear el registro');
+      this.handleError(error, 'Error creating the record');
     }
   }
 
   /**
-   * Encuentra todos los registros con filtros opcionales.
-   * @param filters Opciones de búsqueda (filtros, relaciones, ordenamiento, etc.).
-   * @returns Una lista de registros.
+   * Creates a new record if it does not already exist.
+   * @param filters Filters to search for the existing record.
+   * @param data Data to create the new record.
+   * @returns The existing record or the newly created record.
+   */
+  async createIfNotExists(
+    filters: Record<string, any>,
+    data: DeepPartial<T>,
+  ): Promise<T> {
+    const existingEntity = await this.repository.findOneBy(filters as any);
+    if (existingEntity) {
+      return existingEntity;
+    }
+    const newEntity = this.repository.create(data);
+    return this.repository.save(newEntity);
+  }
+
+  /**
+   * Finds all records with optional filters.
+   * @param filters Search options (filters, relations, ordering, etc.).
+   * @returns A list of records.
    */
   async findAll(filters: FindManyOptions<T> = {}): Promise<T[] | undefined> {
     try {
       return await this.repository.find(filters);
     } catch (error) {
-      this.handleError(error, 'Error al buscar registros');
+      this.handleError(error, 'Error searching for records');
     }
   }
 
   /**
-   * Encuentra un registro por su ID.
-   * @param id El ID del registro.
-   * @returns El registro encontrado.
-   * @throws NotFoundException si el registro no existe.
+   * Finds a record based on optional filters.
+   * @param filters Search options (can include conditions, relations, etc.).
+   * @returns The found record.
+   * @throws NotFoundException if the record does not exist.
+   */
+  async findOneBy(filters: FindOneOptions<T> = {}): Promise<T> {
+    let entity: T | null | undefined;
+    try {
+      entity = await this.repository.findOne(filters);
+    } catch (error) {
+      this.handleError(error, 'Error searching for the record');
+    }
+
+    if (!entity) {
+      throw new NotFoundException('The record does not exist');
+    }
+
+    return entity;
+  }
+
+  /**
+   * Finds a record by its ID.
+   * @param id The ID of the record.
+   * @returns The found record.
+   * @throws NotFoundException if the record does not exist.
    */
   async findOneById(
     id: number,
     parkingId: number,
+    filter?: boolean,
   ): Promise<T | null | undefined> {
     let entity: T | null | undefined;
     try {
-      entity = await this.repository.findOneBy(
-        this.generateWhereFilter(id, parkingId),
-      );
+      entity = await this.repository.findOne({
+        where: filter
+          ? this.generateWhereFilter(id, parkingId)
+          : { id: id as any },
+      });
     } catch (error) {
-      this.handleError(error, 'Error al buscar el registro por ID');
+      this.handleError(error, 'Error searching for the record by ID');
     }
     if (!entity) {
-      throw new NotFoundException(`El registro con ID ${id} no existe`);
+      throw new NotFoundException(`The record with ID ${id} does not exist`);
     }
     return entity;
   }
 
   /**
-   * Actualiza un registro existente.
-   * @param id El ID del registro a actualizar.
-   * @param updateDto Los datos para actualizar el registro.
-   * @returns El registro actualizado.
+   * Updates an existing record.
+   * @param id The ID of the record to update.
+   * @param updateDto The data to update the record.
+   * @returns The updated record.
    */
   async update(
     id: number,
     updateDto: DeepPartial<T>,
-    userId: number,
-    parkingId: number,
+    userPerking: IUserParking,
   ): Promise<T | null | undefined> {
-    updateDto.updatedBy = userId;
+    updateDto.updatedBy = userPerking.userId;
+    updateDto.updatedAt = new Date();
     try {
       await this.repository.update(
-        this.generateWhereFilter(id, parkingId),
+        this.generateWhereFilter(id, userPerking.parkingId),
         updateDto as any,
       );
     } catch (error) {
-      this.handleError(error, 'Error al actualizar el registro');
+      this.handleError(error, 'Error updating the record');
     }
-    return await this.findOneById(id, parkingId);
+    return await this.findOneById(id, userPerking.parkingId, true);
   }
 
   /**
-   * Elimina un registro (soft delete).
-   * @param id El ID del registro a eliminar.
-   * @returns El registro eliminado.
+   * Soft deletes a record.
+   * @param id The ID of the record to delete.
+   * @returns The deleted record.
    */
-  softDelete(
+  async softDelete(
     id: number,
-    userId: number,
-    parkingId: number,
+    userPerking: IUserParking,
   ): Promise<T | null | undefined> {
-    return this.update(
-      id,
-      {
-        deletedAt: new Date(),
-        deletedBy: userId,
-      } as DeepPartial<T>,
-      userId,
-      parkingId,
-    );
+    const data = {
+      deletedAt: new Date(),
+      deletedBy: userPerking.userId,
+    } as DeepPartial<T>;
+    try {
+      await this.repository.update(
+        this.generateWhereFilter(id, userPerking.parkingId),
+        data as any,
+      );
+    } catch (error) {
+      this.handleError(error, 'Error updating the record');
+    }
+    return await this.findOneById(id, userPerking.parkingId);
   }
 
-  // /**
-  //  * Restaura un registro eliminado (soft delete).
-  //  * @param id El ID del registro a restaurar.
-  //  * @returns El registro restaurado.
-  //  */
-  // async restore(id: number): Promise<T | null | undefined> {
-  //   try {
-  //     await this.repository.restore(id);
-  //     return await this.findOneById(id);
-  //   } catch (error) {
-  //     this.handleError(error, 'Error al restaurar el registro');
-  //   }
-  // }
-
   /**
-   * Manejador de errores genérico.
-   * @param error El error capturado.
-   * @param message Mensaje personalizado para el error.
+   * Generic error handler.
+   * @param error The caught error.
+   * @param message Custom message for the error.
    */
   private handleError(
     error: unknown,
-    message: string = 'Ocurrió un error inesperado',
+    message: string = 'An unexpected error occurred',
   ): void {
     console.error(`[ERROR] ${message}:`, error);
 
     if (error instanceof QueryFailedError) {
       const details = (error as any).detail
-        ? `, detalles: ${(error as any).detail}`
+        ? `, details: ${(error as any).detail}`
         : '';
       throw new InternalServerErrorException(
-        `Error en la base de datos: ${error.message}${details}`,
+        `Database error: ${error.message}${details}`,
       );
     }
 
-    // Para otros tipos de errores
+    // For other types of errors
     throw new InternalServerErrorException(message);
   }
 }

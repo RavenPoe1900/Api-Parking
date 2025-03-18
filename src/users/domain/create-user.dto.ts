@@ -1,6 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsEmail, IsInt, Min } from 'class-validator';
+import { IsString, IsNotEmpty, IsInt, Min } from 'class-validator';
 import { User } from './user.entity';
+import { BaseUserDto } from 'src/_shared/domain/dto/baseUser.dto';
+import { Expose } from 'class-transformer';
 
 type UserContract = Omit<
   User,
@@ -14,7 +16,7 @@ type UserContract = Omit<
   | 'role'
   | 'parkingId'
 >;
-export class CreateUserDto implements UserContract {
+export class CreateUserDto extends BaseUserDto implements UserContract {
   /**
    * @example 'John Doe'
    * @description The name of the user.
@@ -23,34 +25,10 @@ export class CreateUserDto implements UserContract {
     example: 'John Doe',
     description: 'The name of the user.',
   })
+  @Expose()
   @IsString()
   @IsNotEmpty()
   name: string;
-
-  /**
-   * @example 'john.doe@example.com'
-   * @description The email address of the user. Must be a valid email format.
-   */
-  @ApiProperty({
-    example: 'john.doe@example.com',
-    description: 'The email address of the user. Must be a valid email format.',
-  })
-  @IsEmail()
-  @IsNotEmpty()
-  email: string;
-
-  /**
-   * @example 'password123'
-   * @description The password for the user account. Must be a non-empty string.
-   */
-  @ApiProperty({
-    example: 'password123',
-    description:
-      'The password for the user account. Must be a non-empty string.',
-  })
-  @IsString()
-  @IsNotEmpty()
-  password: string;
 
   /**
    * @example 1
@@ -61,6 +39,7 @@ export class CreateUserDto implements UserContract {
     description:
       'The ID of the role assigned to the user. Must be a positive integer.',
   })
+  @Expose()
   @IsInt()
   @Min(1)
   roleId: number;

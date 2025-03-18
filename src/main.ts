@@ -2,6 +2,8 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
+import * as cookieParser from 'cookie-parser';
+import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -13,6 +15,10 @@ async function bootstrap() {
       transform: true, // Transforma los datos de entrada al tipo especificado en el DTO
     }),
   );
+
+  app.use(cookieParser());
+  app.enableCors({});
+  app.use(helmet());
 
   // Configuración de Swagger
   const config = new DocumentBuilder()
