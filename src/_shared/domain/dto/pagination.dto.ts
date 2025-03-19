@@ -10,11 +10,11 @@ export class PaginationDto {
   @ApiProperty({
     description: 'Page',
     required: false,
-    example: `0`,
-    default: 0,
-    minimum: 0,
+    example: `1`,
+    default: 1,
+    minimum: 1,
   })
-  page?: number = 0;
+  page?: number = 1;
 
   @IsOptional()
   @IsNumber()

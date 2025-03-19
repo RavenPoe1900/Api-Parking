@@ -73,7 +73,7 @@ export class UsersController {
     @Request() req: RequestWithUser,
   ): Promise<ResponseUserDto[] | undefined> {
     return this.usersService.findAll({
-      skip: pagination.page,
+      skip: (pagination.page || 0 - 1) * (pagination.perPage || 1),
       take: pagination.perPage,
       where: {
         parkingId: req.user.parkingId,

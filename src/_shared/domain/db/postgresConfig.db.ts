@@ -1,6 +1,6 @@
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 
-export function getDatabaseConfig(): TypeOrmModuleOptions {
+export function getPostgresConfig(): TypeOrmModuleOptions {
   return {
     type: 'postgres',
     host: process.env.POSTGRES_HOST,

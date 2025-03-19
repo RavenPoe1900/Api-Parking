@@ -14,10 +14,15 @@ import {
 } from 'typeorm';
 import { IBaseT } from '../domain/interface/baseT.interface';
 import { IUserParking } from '../domain/interface/userParking.interface';
+import { LogsService } from 'src/logs/application/logs.service';
+import { CreateLogDto } from 'src/logs/domain/create-logs.dto';
 
 @Injectable()
 export abstract class BaseService<T extends IBaseT> {
-  constructor(private readonly repository: Repository<T>) {}
+  constructor(
+    protected readonly repository: Repository<T>,
+    protected readonly logsService: LogsService,
+  ) {}
 
   /**
    * Generates a `FindOptionsWhere` object to use as a filter in TypeORM queries.
@@ -53,7 +58,7 @@ export abstract class BaseService<T extends IBaseT> {
       const entity = this.repository.create(createDto as any);
       return await this.repository.save(entity);
     } catch (error) {
-      this.handleError(error, 'Error creating the record');
+      await this.handleError(error, 'Error creating the record');
     }
   }
 
@@ -84,7 +89,7 @@ export abstract class BaseService<T extends IBaseT> {
     try {
       return await this.repository.find(filters);
     } catch (error) {
-      this.handleError(error, 'Error searching for records');
+      await this.handleError(error, 'Error searching for records');
     }
   }
 
@@ -99,7 +104,7 @@ export abstract class BaseService<T extends IBaseT> {
     try {
       entity = await this.repository.findOne(filters);
     } catch (error) {
-      this.handleError(error, 'Error searching for the record');
+      await this.handleError(error, 'Error searching for the record');
     }
 
     if (!entity) {
@@ -128,7 +133,7 @@ export abstract class BaseService<T extends IBaseT> {
           : { id: id as any },
       });
     } catch (error) {
-      this.handleError(error, 'Error searching for the record by ID');
+      await this.handleError(error, 'Error searching for the record by ID');
     }
     if (!entity) {
       throw new NotFoundException(`The record with ID ${id} does not exist`);
@@ -155,7 +160,7 @@ export abstract class BaseService<T extends IBaseT> {
         updateDto as any,
       );
     } catch (error) {
-      this.handleError(error, 'Error updating the record');
+      await this.handleError(error, 'Error updating the record');
     }
     return await this.findOneById(id, userPerking.parkingId, true);
   }
@@ -179,7 +184,7 @@ export abstract class BaseService<T extends IBaseT> {
         data as any,
       );
     } catch (error) {
-      this.handleError(error, 'Error updating the record');
+      await this.handleError(error, 'Error updating the record');
     }
     return await this.findOneById(id, userPerking.parkingId);
   }
@@ -189,22 +194,29 @@ export abstract class BaseService<T extends IBaseT> {
    * @param error The caught error.
    * @param message Custom message for the error.
    */
-  private handleError(
+  private async handleError(
     error: unknown,
     message: string = 'An unexpected error occurred',
-  ): void {
+  ): Promise<void> {
     console.error(`[ERROR] ${message}:`, error);
+
+    const logDto: CreateLogDto = {
+      level: 'error', // Nivel del log (puedes ajustarlo según tus necesidades)
+      message: `Database error: ${error instanceof Error ? error.message : String(error)}`,
+    };
 
     if (error instanceof QueryFailedError) {
       const details = (error as any).detail
         ? `, details: ${(error as any).detail}`
         : '';
+      logDto.message += details;
+      await this.logsService.create(logDto);
+
       throw new InternalServerErrorException(
         `Database error: ${error.message}${details}`,
       );
     }
-
-    // For other types of errors
+    await this.logsService.create(logDto);
     throw new InternalServerErrorException(message);
   }
 }

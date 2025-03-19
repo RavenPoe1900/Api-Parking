@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { RolesModule } from './roles/roles.module';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { getDatabaseConfig } from './_shared/domain/db/databaseConfig';
+import { getPostgresConfig } from './_shared/domain/db/postgresConfig.db';
 import { ConfigModule } from '@nestjs/config';
 import { UsersModule } from './users/users.module';
 import { getJwtConfig } from './_shared/domain/jwt/jwtConfig';
@@ -10,13 +10,16 @@ import { AuthModule } from './_shared/auth/auth.module';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from './_shared/auth/application/auth.guard';
 import { RolesGuard } from './_shared/auth/application/roles.guard';
+import { MongooseModule } from '@nestjs/mongoose';
+import { getMongoConfig } from './_shared/domain/db/mongoConfig.db';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    TypeOrmModule.forRoot(getDatabaseConfig()),
+    MongooseModule.forRootAsync(getMongoConfig()),
+    TypeOrmModule.forRoot(getPostgresConfig()),
     JwtModule.register(getJwtConfig()),
     RolesModule,
     UsersModule,
