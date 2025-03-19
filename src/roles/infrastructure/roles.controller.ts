@@ -69,7 +69,7 @@ export class RolesController {
     @Query() pagination: PaginationRoleDto,
   ): Promise<ResponseRoleDto[] | undefined> {
     return this.rolesService.findAll({
-      skip: pagination.page,
+      skip: (pagination.page || 0 - 1) * (pagination.perPage || 1),
       take: pagination.perPage,
       where: {
         deletedBy: IsNull(),
