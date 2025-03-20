@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -195,7 +196,7 @@ export abstract class BaseService<T extends IBaseT> {
    * @param message Custom message for the error.
    */
   private async handleError(
-    error: unknown,
+    error: any,
     message: string = 'An unexpected error occurred',
   ): Promise<void> {
     console.error(`[ERROR] ${message}:`, error);
@@ -212,11 +213,16 @@ export abstract class BaseService<T extends IBaseT> {
       logDto.message += details;
       await this.logsService.create(logDto);
 
-      throw new InternalServerErrorException(
+      throw new BadRequestException(
         `Database error: ${error.message}${details}`,
       );
     }
     await this.logsService.create(logDto);
+    if (
+      error.message ==
+      'TotalSpots must be greater than or equal to availableSpots'
+    )
+      throw new BadRequestException(`Database error: ${error.message}`);
     throw new InternalServerErrorException(message);
   }
 }

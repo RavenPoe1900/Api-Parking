@@ -15,6 +15,8 @@ type UserContract = Omit<
   | 'id'
   | 'role'
   | 'parkingId'
+  | 'vehicleDetails'
+  | 'reservations'
 >;
 export class CreateUserDto extends BaseUserDto implements UserContract {
   /**

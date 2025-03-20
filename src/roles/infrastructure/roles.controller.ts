@@ -48,7 +48,7 @@ export class RolesController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiResponseSwagger(createSwagger(ResponseRoleDto, controllerName))
-  async create(
+  create(
     @Body() createRoleDto: CreateRoleDto,
     @Request() req: RequestWithUser,
   ): Promise<ResponseRoleDto | ResponseRoleDto[] | undefined> {
@@ -65,11 +65,11 @@ export class RolesController {
   @Get()
   @HttpCode(HttpStatus.OK)
   @ApiResponseSwagger(findSwagger(ResponseRoleDto, controllerName))
-  async findAll(
+  findAll(
     @Query() pagination: PaginationRoleDto,
   ): Promise<ResponseRoleDto[] | undefined> {
     return this.rolesService.findAll({
-      skip: (pagination.page || 0 - 1) * (pagination.perPage || 1),
+      skip: ((pagination.page || 0) - 1) * (pagination.perPage || 50),
       take: pagination.perPage,
       where: {
         deletedBy: IsNull(),
@@ -86,7 +86,7 @@ export class RolesController {
   @Get(':id')
   @HttpCode(HttpStatus.OK)
   @ApiResponseSwagger(findOneSwagger(ResponseRoleDto, controllerName))
-  async findOneById(
+  findOneById(
     @Param('id') id: number,
     @Request() req: RequestWithUser,
   ): Promise<ResponseRoleDto | null | undefined> {
@@ -102,7 +102,7 @@ export class RolesController {
   @Patch(':id')
   @HttpCode(HttpStatus.ACCEPTED)
   @ApiResponseSwagger(updateSwagger(ResponseRoleDto, controllerName))
-  async update(
+  update(
     @Param('id') id: number,
     @Body() updateRoleDto: UpdateRoleDto,
     @Request() req: RequestWithUser,
@@ -121,7 +121,7 @@ export class RolesController {
   @Delete(':id')
   @HttpCode(HttpStatus.ACCEPTED)
   @ApiResponseSwagger(deleteSwagger(ResponseRoleDto, controllerName))
-  async softDelete(
+  softDelete(
     @Param('id') id: number,
     @Request() req: RequestWithUser,
   ): Promise<ResponseRoleDto | null | undefined> {

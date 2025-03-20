@@ -10,19 +10,21 @@ import { LoginDto } from '../domain/login.dto';
 import { ResponseUserDto } from 'src/users/domain/response-user.dto';
 import { plainToInstance } from 'class-transformer';
 import { RolesService } from 'src/roles/application/roles.service';
+import { ParkingsService } from 'src/parkings/application/parkings.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private usersService: UsersService,
+    private parkingsService: ParkingsService,
     private rolesService: RolesService,
     private jwtService: JwtService,
   ) {}
 
-  async login(email: string, pass: string) {
+  async login(loginDto: LoginDto) {
     let user: IUserAuth;
     const findUser: FindOneOptions<User> = {
-      where: { email },
+      where: { email: loginDto.email },
       select: {
         id: true,
         parkingId: true,
@@ -41,12 +43,17 @@ export class AuthService {
       throw e;
     }
 
-    if (!(await validatePassword(pass, user.password))) {
+    if (!(await validatePassword(loginDto.password, user.password))) {
       throw new UnauthorizedException();
     }
+    await this.parkingsService.findOneById(
+      loginDto.parkingId,
+      loginDto.parkingId,
+    );
+
     const payload: IPayload = {
       userId: user.id,
-      parkingId: user.parkingId,
+      parkingId: loginDto.parkingId,
     };
     return {
       access_token: await this.jwtService.signAsync(payload),

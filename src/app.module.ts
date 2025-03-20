@@ -12,6 +12,9 @@ import { AuthGuard } from './_shared/auth/application/auth.guard';
 import { RolesGuard } from './_shared/auth/application/roles.guard';
 import { MongooseModule } from '@nestjs/mongoose';
 import { getMongoConfig } from './_shared/domain/db/mongoConfig.db';
+import { VehicleDetailsModule } from './vehicleDetails/vehicleDetails.module';
+import { ParkingsModule } from './parkings/parkings.module';
+import { ReservationsModule } from './reservations/reservations.module';
 
 @Module({
   imports: [
@@ -24,6 +27,9 @@ import { getMongoConfig } from './_shared/domain/db/mongoConfig.db';
     RolesModule,
     UsersModule,
     AuthModule,
+    VehicleDetailsModule,
+    ParkingsModule,
+    ReservationsModule,
   ],
   controllers: [],
   providers: [

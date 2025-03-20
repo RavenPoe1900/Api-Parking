@@ -1,26 +1,26 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { CreateReservationDto } from './create-reservation.dto';
 import { IsInt, IsNotEmpty, IsNumber, Min } from 'class-validator';
-import { User } from './user.entity';
-import { CreateUserDto } from './create-user.dto';
-import { Expose } from 'class-transformer';
-import { Reservation } from 'src/reservations/domain/reservation.entity';
+import { Reservation } from './reservation.entity';
 
-type UserContract = Omit<
-  User,
+type ReservationContract = Omit<
+  Reservation,
+  | 'parking'
+  | 'vehicleDetail'
+  | 'user'
   | 'createdAt'
   | 'updatedAt'
   | 'createdBy'
   | 'updatedBy'
   | 'deletedAt'
   | 'deletedBy'
-  | 'role'
-  | 'vehicleDetails'
-  | 'reservations'
+  | 'validateReservationDates'
 >;
 
-export class ResponseUserDto extends CreateUserDto implements UserContract {
-  reservations: Reservation[];
-  @Expose()
+export class ResponseReservationDto
+  extends CreateReservationDto
+  implements ReservationContract
+{
   @ApiProperty({
     description: 'Unique ID of the resource',
     example: 1,
@@ -41,7 +41,6 @@ export class ResponseUserDto extends CreateUserDto implements UserContract {
     minimum: 1,
     type: Number,
   })
-  @Expose()
   @IsInt()
   @Min(1)
   @IsNotEmpty()

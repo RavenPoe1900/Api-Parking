@@ -49,7 +49,7 @@ export class UsersController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiResponseSwagger(createSwagger(ResponseUserDto, controllerName))
-  async create(
+  create(
     @Body() createUserDto: CreateUserDto,
     @Request() req: RequestWithUser,
   ): Promise<ResponseUserDto | ResponseUserDto[] | undefined> {
@@ -68,12 +68,12 @@ export class UsersController {
   @Get()
   @HttpCode(HttpStatus.OK)
   @ApiResponseSwagger(findSwagger(ResponseUserDto, controllerName))
-  async findAll(
+  findAll(
     @Query() pagination: PaginationUserDto,
     @Request() req: RequestWithUser,
   ): Promise<ResponseUserDto[] | undefined> {
     return this.usersService.findAll({
-      skip: (pagination.page || 0 - 1) * (pagination.perPage || 1),
+      skip: ((pagination.page || 0) - 1) * (pagination.perPage || 50),
       take: pagination.perPage,
       where: {
         parkingId: req.user.parkingId,
@@ -92,7 +92,7 @@ export class UsersController {
   @Get(':id')
   @HttpCode(HttpStatus.OK)
   @ApiResponseSwagger(findOneSwagger(ResponseUserDto, controllerName))
-  async findOneById(
+  findOneById(
     @Param('id') id: number,
     @Request() req: RequestWithUser,
   ): Promise<ResponseUserDto | null | undefined> {
@@ -109,7 +109,7 @@ export class UsersController {
   @Patch(':id')
   @HttpCode(HttpStatus.ACCEPTED)
   @ApiResponseSwagger(updateSwagger(ResponseUserDto, controllerName))
-  async update(
+  update(
     @Param('id') id: number,
     @Body() updateUserDto: UpdateUserDto,
     @Request() req: RequestWithUser,
@@ -129,7 +129,7 @@ export class UsersController {
   @Delete(':id')
   @HttpCode(HttpStatus.ACCEPTED)
   @ApiResponseSwagger(deleteSwagger(ResponseUserDto, controllerName))
-  async softDelete(
+  softDelete(
     @Param('id') id: number,
     @Request() req: RequestWithUser,
   ): Promise<ResponseUserDto | null | undefined> {
