@@ -20,13 +20,10 @@ async function bootstrap() {
   app.enableCors({});
   app.use(helmet());
 
-  // Configuración de Swagger
   const config = new DocumentBuilder()
-    .setTitle('API de Roles y Usuarios')
-    .setDescription('API para gestionar roles y usuarios con soft delete')
+    .setTitle('Parking API')
+    .setDescription('API to manage Parking')
     .setVersion('1.0')
-    .addTag('roles', 'Gestión de roles')
-    .addTag('users', 'Gestión de usuarios')
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
