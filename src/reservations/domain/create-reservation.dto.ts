@@ -17,6 +17,7 @@ type ReservationContract = Omit<
   | 'vehicleDetail'
   | 'user'
   | 'validateReservationDates'
+  | 'status'
 >;
 
 export class CreateReservationDto implements ReservationContract {

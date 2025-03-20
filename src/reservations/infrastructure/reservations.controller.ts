@@ -27,11 +27,15 @@ import {
   PaginatedResult,
   PaginationReservationDto,
 } from '../domain/pagination-reservation.dto';
-import { IsNull } from 'typeorm';
 import { Roles } from 'src/_shared/auth/domain/roles.decorator';
-import { UpdateReservationDto } from '../domain/update-reservation.dto';
+import {
+  UpdateReservationDto,
+  UpdateReservationStatusDto,
+} from '../domain/update-reservation.dto';
 import { CreateReservationDto } from '../domain/create-reservation.dto';
 import { Reservation } from '../domain/reservation.entity';
+import { GetStatusSummaryDto } from '../domain/getStatusSummary.dto';
+import { ReservationStatus } from '../domain/reservationStatus.enum';
 
 const controllerName = 'reservations';
 
@@ -78,6 +82,20 @@ export class ReservationsController {
   }
 
   /**
+   * Retrieves the count of reservations grouped by status, optionally filtered by parkingId.
+   * @param query - Optional query parameters (e.g., parkingId).
+   * @returns An object with the count of each status.
+   */
+  @Get('status-summary')
+  @HttpCode(HttpStatus.OK)
+  @ApiResponseSwagger(updateSwagger(ResponseReservationDto, controllerName))
+  async getStatusSummary(
+    @Query() query: GetStatusSummaryDto,
+  ): Promise<Record<ReservationStatus, number>> {
+    return this.reservationsService.getStatusSummary(query.parkingId);
+  }
+
+  /**
    * Retrieves a reservation by its ID.
    * @param id The ID of the reservation.
    * @returns The found reservation or null if it does not exist.
@@ -110,6 +128,32 @@ export class ReservationsController {
       id,
       updatereservationDto,
       req.user,
+    );
+  }
+
+  /**
+   * Updates the status of a reservation.
+   * @param id - The ID of the reservation to update.
+   * @param updateReservationStatusDto - The new status for the reservation.
+   * @returns The updated reservation.
+   * @throws BadRequestException if the status transition is invalid.
+   */
+  @Patch('/status/:id')
+  @Roles('client', 'admin')
+  @HttpCode(HttpStatus.OK)
+  @ApiResponseSwagger(updateSwagger(ResponseReservationDto, controllerName))
+  updateReservationStatus(
+    @Param('id') id: number,
+    @Body() updateReservationStatusDto: UpdateReservationStatusDto,
+    @Request() req: RequestWithUser,
+  ) {
+    return this.reservationsService.updateReservationStatus(
+      id,
+      updateReservationStatusDto.status,
+      {
+        userId: req.user.userId,
+        parkingId: req.user.parkingId,
+      },
     );
   }
 
