@@ -23,11 +23,15 @@ import {
 } from 'src/_shared/domain/swagger/http.swagger';
 import { ResponseReservationDto } from '../domain/response-reservation.dto';
 import { RequestWithUser } from 'src/_shared/domain/type/requestWithUser.type';
-import { PaginationReservationDto } from '../domain/pagination-reservation.dto';
+import {
+  PaginatedResult,
+  PaginationReservationDto,
+} from '../domain/pagination-reservation.dto';
 import { IsNull } from 'typeorm';
 import { Roles } from 'src/_shared/auth/domain/roles.decorator';
 import { UpdateReservationDto } from '../domain/update-reservation.dto';
 import { CreateReservationDto } from '../domain/create-reservation.dto';
+import { Reservation } from '../domain/reservation.entity';
 
 const controllerName = 'reservations';
 
@@ -46,6 +50,7 @@ export class ReservationsController {
    * @returns The created reservation.
    */
   @Post()
+  @Roles('client', 'admin')
   @HttpCode(HttpStatus.CREATED)
   @ApiResponseSwagger(createSwagger(ResponseReservationDto, controllerName))
   create(
@@ -63,19 +68,13 @@ export class ReservationsController {
    * @returns A list of reservations.
    */
   @Get()
+  @Roles('employer', 'admin')
   @HttpCode(HttpStatus.OK)
   @ApiResponseSwagger(findSwagger(ResponseReservationDto, controllerName))
   findAll(
     @Query() pagination: PaginationReservationDto,
-  ): Promise<ResponseReservationDto[] | undefined> {
-    return this.reservationsService.findAll({
-      skip: ((pagination.page || 0) - 1) * (pagination.perPage || 50),
-      take: pagination.perPage,
-      where: {
-        deletedBy: IsNull(),
-        deletedAt: IsNull(),
-      },
-    });
+  ): Promise<PaginatedResult<Reservation>> {
+    return this.reservationsService.findAllReservations(pagination);
   }
 
   /**

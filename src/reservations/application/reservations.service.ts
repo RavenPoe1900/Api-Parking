@@ -10,6 +10,10 @@ import { IPayload } from 'src/_shared/domain/interface/payload.interface';
 import { CreateReservationDto } from '../domain/create-reservation.dto';
 import { UpdateReservationDto } from '../domain/update-reservation.dto';
 import { ResponseReservationDto } from '../domain/response-reservation.dto';
+import {
+  PaginatedResult,
+  PaginationReservationDto,
+} from '../domain/pagination-reservation.dto';
 
 @Injectable()
 export class ReservationsService extends BaseService<Reservation> {
@@ -22,6 +26,12 @@ export class ReservationsService extends BaseService<Reservation> {
     super(reservationRepository, logsService);
   }
 
+  /**
+   * Creates a new reservation if parking spots are available.
+   * @param createReservationDto - Data for creating the reservation.
+   * @param payload - User and parking context (e.g., userId, parkingId).
+   * @returns A response DTO representing the created reservation or undefined if creation fails.
+   */
   async createReservation(
     createReservationDto: CreateReservationDto,
     payload: IPayload,
@@ -44,25 +54,97 @@ export class ReservationsService extends BaseService<Reservation> {
     return undefined;
   }
 
+  /**
+   * Retrieves a paginated list of reservations filtered by date range and sorted by start time.
+   * @param paginationDto - Pagination parameters including page, perPage, and optional date filters.
+   * @returns A paginated result containing the reservations and total count.
+   */
+  async findAllReservations(
+    paginationDto: PaginationReservationDto,
+  ): Promise<PaginatedResult<Reservation>> {
+    const { page, perPage, reservationStart, reservationEnd } = paginationDto;
+
+    // Get the configured time zone or default to 'America/New_York'
+    const timeZone =
+      this.configService.get<string>('TIME_ZONE') || 'America/New_York';
+
+    const skip = ((page || 1) - 1) * (perPage || 50);
+
+    // Convert reservation dates to the specified time zone
+    const localReservationStart = this.convertToTimeZone(
+      reservationStart,
+      timeZone,
+    );
+    const localReservationEnd = this.convertToTimeZone(
+      reservationEnd,
+      timeZone,
+    );
+
+    const query = this.reservationRepository.createQueryBuilder('r');
+
+    // Apply date filters if provided
+    if (localReservationStart && localReservationEnd) {
+      query
+        .where('r.reservationStart <= :reservationEnd', {
+          reservationEnd: localReservationEnd,
+        })
+        .andWhere('r.reservationEnd >= :reservationStart', {
+          reservationStart: localReservationStart,
+        });
+    } else if (localReservationStart) {
+      query.where('r.reservationEnd >= :reservationStart', {
+        reservationStart: localReservationStart,
+      });
+    } else if (localReservationEnd) {
+      query.where('r.reservationStart <= :reservationEnd', {
+        reservationEnd: localReservationEnd,
+      });
+    }
+
+    // Order, paginate, and execute the query
+    query.orderBy('r.reservationStart', 'ASC').skip(skip).take(perPage);
+
+    const [data, total] = await query.getManyAndCount();
+
+    return { data, total };
+  }
+
+  /**
+   * Updates an existing reservation if parking spots are available for the new date range.
+   * @param id - The ID of the reservation to update.
+   * @param updateReservationDto - Data for updating the reservation.
+   * @param payload - User and parking context (e.g., userId, parkingId).
+   * @returns A response DTO representing the updated reservation or null/undefined if update fails.
+   */
   async updateReservation(
     id: number,
     updateReservationDto: UpdateReservationDto,
     payload: IPayload,
   ): Promise<ResponseReservationDto | null | undefined> {
-    if (updateReservationDto.reservationStart || updateReservationDto.reservationEnd) {
+    // Check if either reservationStart or reservationEnd is provided
+    if (
+      updateReservationDto.reservationStart ||
+      updateReservationDto.reservationEnd
+    ) {
       if (
         !updateReservationDto.reservationStart ||
         !updateReservationDto.reservationEnd
       ) {
-        const existingReservation = await this.reservationRepository.findOne({ where: { id } });
+        // Fetch existing reservation to fill missing fields
+        const existingReservation = await this.reservationRepository.findOne({
+          where: { id },
+        });
         if (!existingReservation) {
-          throw new BadRequestException('La reserva no existe.');
+          throw new BadRequestException('The reservation does not exist.');
         }
         updateReservationDto.reservationStart =
-          updateReservationDto.reservationStart || existingReservation.reservationStart;
+          updateReservationDto.reservationStart ||
+          existingReservation.reservationStart;
         updateReservationDto.reservationEnd =
-          updateReservationDto.reservationEnd || existingReservation.reservationEnd;
+          updateReservationDto.reservationEnd ||
+          existingReservation.reservationEnd;
       }
+      // Validate parking availability for the new date range
       await this.ifAvailableParking(
         payload.parkingId,
         updateReservationDto.reservationStart,
@@ -77,21 +159,32 @@ export class ReservationsService extends BaseService<Reservation> {
   }
 
   /**
-   * Verifica si en el rango de fechas especificado existe disponibilidad en el parking.
-   *
-   * Se convierte el rango de fechas (que llega en UTC) a la zona horaria definida en la configuración
-   * para poder compararlo con las fechas almacenadas en la base de datos.
+   * Checks if there are available parking spots for the given date range.
+   * @param parkingId - The ID of the parking lot.
+   * @param reservationStart - Start date of the reservation.
+   * @param reservationEnd - End date of the reservation.
+   * @throws BadRequestException if the parking does not exist or no spots are available.
    */
   private async ifAvailableParking(
     parkingId: number,
     reservationStart: Date,
     reservationEnd: Date,
   ): Promise<void> {
-    const timeZone = this.configService.get<string>('TIME_ZONE') || 'America/New_York';
+    // Get the configured time zone or default to 'America/New_York'
+    const timeZone =
+      this.configService.get<string>('TIME_ZONE') || 'America/New_York';
 
-    const localReservationStart = this.convertToTimeZone(reservationStart, timeZone);
-    const localReservationEnd = this.convertToTimeZone(reservationEnd, timeZone);
+    // Convert reservation dates to the specified time zone
+    const localReservationStart = this.convertToTimeZone(
+      reservationStart,
+      timeZone,
+    );
+    const localReservationEnd = this.convertToTimeZone(
+      reservationEnd,
+      timeZone,
+    );
 
+    // Query to check parking availability
     const query = `
       SELECT 
         p."totalSpots",
@@ -112,19 +205,26 @@ export class ReservationsService extends BaseService<Reservation> {
     ]);
 
     if (!result || result.length === 0) {
-      throw new BadRequestException('El parking no existe.');
+      throw new BadRequestException('The parking does not exist.');
     }
 
     const totalSpots = Number(result[0].totalSpots);
-    const overlappingReservationsCount = Number(result[0].overlappingReservationsCount);
+    const overlappingReservationsCount = Number(
+      result[0].overlappingReservationsCount,
+    );
 
     if (overlappingReservationsCount >= totalSpots) {
       throw new BadRequestException(
-        'No hay plazas disponibles en el rango de fechas especificado.',
+        'No parking spots are available for the specified date range.',
       );
     }
   }
 
+  /**
+   * Converts a Reservation entity to a ResponseReservationDto.
+   * @param reservation - The Reservation entity to convert.
+   * @returns A ResponseReservationDto object.
+   */
   private toResponseReservationDto(
     reservation: Reservation,
   ): ResponseReservationDto {
@@ -139,9 +239,13 @@ export class ReservationsService extends BaseService<Reservation> {
   }
 
   /**
-   * Convierte una fecha (en UTC) a un string formateado en la zona horaria especificada.
+   * Converts a UTC date to a formatted string in the specified time zone.
+   * @param date - The UTC date to convert.
+   * @param timeZone - The target time zone (e.g., 'America/New_York').
+   * @returns A formatted date string in the specified time zone.
    */
   private convertToTimeZone(date: Date, timeZone: string): string {
+    if (!date) return '';
     const zonedDate = toZonedTime(date, timeZone);
     return format(zonedDate, 'yyyy-MM-dd HH:mm:ss', { timeZone });
   }
