@@ -12,6 +12,7 @@ import {
   BeforeInsert,
   BeforeUpdate,
 } from 'typeorm';
+import { ReservationStatus } from './reservationStatus.enum';
 
 @Entity()
 export class Reservation extends IBaseEntity {
@@ -37,6 +38,13 @@ export class Reservation extends IBaseEntity {
 
   @Column()
   reservationEnd: Date;
+
+  @Column({
+    type: 'enum',
+    enum: ReservationStatus,
+    default: ReservationStatus.RESERVED, // Valor predeterminado
+  })
+  status: ReservationStatus;
 
   @AfterLoad()
   @BeforeInsert()

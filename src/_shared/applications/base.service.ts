@@ -12,11 +12,13 @@ import {
   IsNull,
   FindOptionsWhere,
   FindOneOptions,
+  UpdateResult,
 } from 'typeorm';
 import { IBaseT } from '../domain/interface/baseT.interface';
 import { IUserParking } from '../domain/interface/userParking.interface';
 import { LogsService } from 'src/logs/application/logs.service';
 import { CreateLogDto } from 'src/logs/domain/create-logs.dto';
+import { Reservation } from 'src/reservations/domain/reservation.entity';
 
 @Injectable()
 export abstract class BaseService<T extends IBaseT> {
@@ -152,16 +154,22 @@ export abstract class BaseService<T extends IBaseT> {
     id: number,
     updateDto: DeepPartial<T>,
     userPerking: IUserParking,
+    findOptionsWhere?: FindOptionsWhere<T>,
   ): Promise<T | null | undefined> {
     updateDto.updatedBy = userPerking.userId;
     updateDto.updatedAt = new Date();
+    let result: UpdateResult | null = null;
     try {
-      await this.repository.update(
-        this.generateWhereFilter(id, userPerking.parkingId),
-        updateDto as any,
-      );
+      const whereFilter: FindOptionsWhere<T> = {
+        ...this.generateWhereFilter(id, userPerking.parkingId),
+        ...findOptionsWhere,
+      };
+      result = await this.repository.update(whereFilter, updateDto as any);
     } catch (error) {
       await this.handleError(error, 'Error updating the record');
+    }
+    if (!result || result.affected === 0) {
+      throw new BadRequestException('The search preconditions were not met.');
     }
     return await this.findOneById(id, userPerking.parkingId, true);
   }

@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { FindOptionsWhere, Repository } from 'typeorm';
 import { toZonedTime, format } from 'date-fns-tz';
 import { ConfigService } from '@nestjs/config';
 import { BaseService } from 'src/_shared/applications/base.service';
@@ -14,6 +14,8 @@ import {
   PaginatedResult,
   PaginationReservationDto,
 } from '../domain/pagination-reservation.dto';
+import { StatusSummaryResponseDto } from '../domain/reservationStatus.dto';
+import { ReservationStatus } from '../domain/reservationStatus.enum';
 
 @Injectable()
 export class ReservationsService extends BaseService<Reservation> {
@@ -109,6 +111,43 @@ export class ReservationsService extends BaseService<Reservation> {
     return { data, total };
   }
 
+  async getStatusSummary(
+    parkingId?: number,
+  ): Promise<StatusSummaryResponseDto> {
+    const query = this.reservationRepository
+      .createQueryBuilder('reservation')
+      .select('reservation.status', 'status')
+      .addSelect('COUNT(reservation.id)', 'count')
+      .groupBy('reservation.status');
+
+    // Add optional filter by parkingId
+    if (parkingId) {
+      query.where('reservation.parkingId = :parkingId', { parkingId });
+    }
+
+    // Execute the query and map the results
+    const results = await query.getRawMany();
+
+    // Initialize the summary object with all possible statuses
+    const summary: StatusSummaryResponseDto = {
+      RESERVED: 0,
+      CHECKED_IN: 0,
+      CHECKED_OUT: 0,
+      CANCELLED: 0,
+    };
+
+    // Populate the summary object with the query results
+    results.forEach((row) => {
+      const status = row.status as keyof StatusSummaryResponseDto;
+      const count = parseInt(row.count, 10);
+      if (summary.hasOwnProperty(status)) {
+        summary[status] = count;
+      }
+    });
+
+    return summary;
+  }
+
   /**
    * Updates an existing reservation if parking spots are available for the new date range.
    * @param id - The ID of the reservation to update.
@@ -156,6 +195,59 @@ export class ReservationsService extends BaseService<Reservation> {
       userId: payload.userId,
       parkingId: payload.parkingId,
     });
+  }
+
+  /**
+   * Updates the status of a reservation with validation for state transitions.
+   * @param id - The ID of the reservation to update.
+   * @param newStatus - The new status for the reservation.
+   * @returns The updated reservation.
+   * @throws BadRequestException if the status transition is invalid.
+   * @throws NotFoundException if the reservation does not exist or the update fails.
+   */
+  async updateReservationStatus(
+    id: number,
+    newStatus: ReservationStatus,
+    payload: IPayload,
+  ): Promise<ResponseReservationDto | null | undefined> {
+    // Define valid state transitions
+    const validTransitions: Record<ReservationStatus, ReservationStatus[]> = {
+      [ReservationStatus.RESERVED]: [
+        ReservationStatus.CHECKED_IN,
+        ReservationStatus.CANCELLED,
+      ],
+      [ReservationStatus.CHECKED_IN]: [ReservationStatus.CHECKED_OUT],
+      [ReservationStatus.CHECKED_OUT]: [],
+      [ReservationStatus.CANCELLED]: [],
+    };
+
+    // Validate the requested transition
+    const currentStatus = Object.keys(validTransitions).find((status) =>
+      validTransitions[status as ReservationStatus].includes(newStatus),
+    ) as ReservationStatus | undefined;
+
+    if (!currentStatus) {
+      throw new BadRequestException(
+        `Invalid status transition to ${newStatus}.`,
+      );
+    }
+
+    // Build the query with FindOptionsWhere to validate the current status
+    const whereCondition: FindOptionsWhere<Reservation> = {
+      status: currentStatus, // Precondition: Only update if the current status matches
+    };
+
+    // Perform the update in a single query
+    const result = await this.update(
+      id,
+      {
+        status: newStatus,
+      },
+      payload,
+      whereCondition,
+    );
+
+    return result;
   }
 
   /**
@@ -235,6 +327,7 @@ export class ReservationsService extends BaseService<Reservation> {
       vehicleId: reservation.vehicleId,
       reservationStart: reservation.reservationStart,
       reservationEnd: reservation.reservationEnd,
+      status: reservation.status,
     };
   }
 
