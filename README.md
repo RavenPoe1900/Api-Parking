@@ -1,86 +1,81 @@
-# **Proyecto de Gestión Integral de Reservas de Parqueo**
+# Proyecto de Gestión Integral de Reservas de Parqueo
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 ✨ Un sistema modular y escalable para gestionar múltiples reservaciones de estacionamiento, usuarios, roles y registros de actividades.
 
----
+Este proyecto está diseñado para simplificar y optimizar la gestión de reservaciones en estacionamientos. La solución está creada de manera modular, integrando la administración de reservas, usuarios, roles y logs, lo que garantiza una experiencia segura, escalable y eficiente. Además, el sistema verifica la disponibilidad de espacios en tiempo real, facilitando el control del flujo y la toma de decisiones en los parqueos.
 
-## **Enfoque del Proyecto**
+## Características Principales
 
-Este proyecto está diseñado para simplificar y optimizar la gestión de múltiples reservaciones en estacionamientos. La solución integra de manera modular la administración de reservas, usuarios, roles y registros de actividades, garantizando una experiencia segura, escalable y eficiente. El sistema permite verificar en tiempo real la disponibilidad de espacios, facilitando la toma de decisiones y el control del flujo en los parqueos.
+### Base
 
----
+El módulo base aporta funcionalidades comunes y reutilizables a los diferentes componentes del sistema (reservations, parking, roles, usuarios y datos de vehículos). Entre sus características destacan:
 
-## **Características Principales**
-
-### **Base**
-
-El módulo base establece las funcionalidades comunes y reutilizables que sustentan los distintos componentes del sistema (reservations, parking, roles, usuarios y datos de vehículos). Entre sus principales características se destacan:
-
-- **Operaciones CRUD Genéricas:** Implementa métodos centralizados para crear, leer, actualizar y eliminar registros, promoviendo la reutilización de código y simplificando el mantenimiento.
-- **Filtrado y Búsqueda Dinámica:** Ofrece herramientas para generar filtros y realizar consultas precisas en la base de datos, agilizando la gestión de la información.
-- **Gestión Centralizada de Errores:** Captura y registra incidencias de forma centralizada, lanzando excepciones adecuadas para mantener la integridad y consistencia del sistema.
+- **Operaciones CRUD Genéricas:** Métodos centralizados para crear, leer, actualizar y eliminar registros, promoviendo la reutilización y simplificando el mantenimiento.
+- **Filtrado y Búsqueda Dinámica:** Herramientas para generar filtros y consultas precisas en la base de datos, agilizando la gestión de la información.
+- **Gestión Centralizada de Errores:** Captura y registro de incidencias de forma unificada, lanzando excepciones que garantizan la integridad del sistema.
 - **Integración con LogsService:** Automatiza el registro de eventos y errores durante las operaciones, facilitando el seguimiento y la auditoría.
 - **Compatibilidad Multientorno:** Diseñado para ser extendido por módulos específicos (Parking, Roles, Usuarios y Vehículos), brindando una base sólida y escalable para la administración de datos.
 
----
+### Logs
 
-### **Logs**
+El módulo de logs se encarga de rastrear y documentar todas las actividades y fallos del sistema. Sus funcionalidades incluyen:
 
-El módulo de logs se encarga de rastrear y documentar todas las actividades y errores del sistema. Sus funcionalidades incluyen:
-
-- **Registro de Eventos:** Permite crear entradas de log que capturan actividades y sucesos relevantes.
+- **Registro de Eventos:** Permite crear entradas de log que capturan actividades relevantes.
 - **Consulta y Análisis de Logs:** Recupera registros con soporte para paginación y filtros personalizados, facilitando un análisis detallado y la auditoría.
-- **Integración Multiservicio:** Se utiliza en diversos módulos (Parking, Roles, Usuarios y Vehículos) para mantener un seguimiento homogéneo y riguroso de todas las operaciones.
+- **Integración Multiservicio:** Utilizado en módulos como Parking, Roles, Usuarios y Vehículos para mantener un seguimiento homogéneo de todas las operaciones.
 
----
+### Reservations
 
-### **Reservations**
+Este módulo gestiona la lógica de negocio de las reservas de estacionamiento. Entre sus funciones destacan:
 
-Este módulo gestiona la lógica de negocio relacionada con las reservas de estacionamiento. Entre sus funciones destacan:
-
-- **Creación de Reservas:** Verifica la disponibilidad de espacios antes de confirmar una nueva reserva.
-- **Consulta y Paginación:** Permite listar las reservas en forma paginada y filtrarlas por rangos de fecha.
-- **Actualización de Reservas:** Facilita la modificación de los detalles de una reserva, comprobando la disponibilidad para nuevos intervalos de tiempo.
+- **Creación de Reservas:** Verifica la disponibilidad de espacios antes de confirmar una reserva.
+- **Consulta y Paginación:** Permite listar reservas de forma paginada y filtrarlas según rangos de fecha.
+- **Actualización de Reservas:** Facilita la modificación de una reserva, comprobando la disponibilidad para nuevos intervalos de tiempo.
 - **Gestión de Estados:** Controla y valida las transiciones de estado (por ejemplo, de "Reservado" a "Check-in") para asegurar procesos coherentes.
 - **Resumen de Estados:** Genera informes que agrupan las reservas según su estado actual.
 - **Verificación de Disponibilidad:** Evalúa en tiempo real la disponibilidad de espacios en un parqueo para intervalos específicos.
 
----
+### Servicios de Autenticación
 
-### **Servicios de Autenticación**
+El módulo de autenticación (AuthService) garantiza el acceso seguro al sistema mediante:
 
-El módulo de autenticación (AuthService) se encarga de gestionar el acceso seguro al sistema mediante:
+- **Inicio de Sesión:** Valida las credenciales del usuario y emite un token JWT para acceder a recursos protegidos.
+- **Registro de Usuarios:** Crea nuevos usuarios con el rol "cliente", almacenando contraseñas de forma segura mediante hashing.
+- **Validación de Roles y Asociaciones:** Asegura que los usuarios posean el rol adecuado y estén vinculados al parqueo correcto.
+- **Manejo de Excepciones:** Gestiona de forma adecuada los errores de autenticación, bloqueando el acceso a usuarios no autorizados.
 
-- **Inicio de Sesión:** Valida las credenciales del usuario y emite un token JWT para acceder a los recursos protegidos.
-- **Registro de Usuarios:** Permite la creación de nuevos usuarios con el rol "cliente", asegurando el almacenamiento seguro de contraseñas mediante hashing.
-- **Validación de Roles y Asociaciones:** Garantiza que los usuarios dispongan del rol adecuado y estén vinculados al estacionamiento correcto.
-- **Manejo de Excepciones:** Gestiona de forma adecuada los errores de autenticación, impidiendo el acceso a usuarios no autorizados.
+## Tecnologías Utilizadas
 
----
-
-## **Tecnologías Utilizadas**
-
-Este proyecto utiliza las siguientes tecnologías y herramientas:
-
-- **Backend:** [NestJS](https://nestjs.com/) (Framework Node.js)
-- **Base de Datos:** [MongoDB](https://www.mongodb.com/) o [PostgreSQL](https://www.postgresql.org/)
+- **Backend:** [NestJS](https://nestjs.com/)
+- **Base de Datos:** [PostgreSQL](https://www.postgresql.org/) y/o [MongoDB](https://www.mongodb.com/)
 - **Autenticación:** JSON Web Tokens (JWT)
-- **Logs:** Integración con servicios de registro para auditoría y depuración
+- **Logs:** Integración de servicios para auditoría y depuración
 - **Testing:** Jest para pruebas unitarias y de integración
 - **Documentación API:** Swagger/OpenAPI
 
----
+## Semilla de la Base de Datos (Seed)
 
-## **Instalación**
+El script seed permite poblar la base de datos con datos iniciales (roles, usuarios, parqueos, vehículos y reservas), lo que facilita el levantamiento del entorno de desarrollo. Este script realiza las siguientes operaciones:
 
-Para ejecutar este proyecto localmente, sigue estos pasos:
+- Establece la conexión con la base de datos.
+- Crea roles (admin, employer y client) si no existen.
+- Registra un usuario administrador y uno regular.
+- Genera parqueos de ejemplo.
+- Añade detalles de vehículos.
+- Crea reservas asociadas a los vehículos.
 
-1. **Clona el repositorio:**
-   ```bash
-   git clone https://github.com/usuario/proyecto.git
-   cd proyecto
+### Ejecución del Seed
+
+Para ejecutar el seed, utiliza el siguiente comando. Puedes hacerlo tanto con **npm** como con **yarn**:
+
+```bash
+# Con npm
+npm run seed
+
+# Con yarn
+yarn seed
 
 <p align="center">
   <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
