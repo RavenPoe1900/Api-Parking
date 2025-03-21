@@ -28,6 +28,7 @@ import { IsNull } from 'typeorm';
 import { Roles } from 'src/_shared/auth/domain/roles.decorator';
 import { UpdateParkingDto } from '../domain/update-parking.dto';
 import { CreateParkingDto } from '../domain/create-parking.dto';
+import { PositiveIntPipe } from 'src/_shared/domain/pipes/positive-int.pipe';
 
 const controllerName = 'Parkings';
 
@@ -87,7 +88,7 @@ export class ParkingsController {
   @HttpCode(HttpStatus.OK)
   @ApiResponseSwagger(findOneSwagger(ResponseParkingDto, controllerName))
   findOneById(
-    @Param('id') id: number,
+    @Param('id', PositiveIntPipe) id: number,
     @Request() req: RequestWithUser,
   ): Promise<ResponseParkingDto | null | undefined> {
     return this.parkingsService.findOneById(id, req.user.parkingId, true);
@@ -103,7 +104,7 @@ export class ParkingsController {
   @HttpCode(HttpStatus.ACCEPTED)
   @ApiResponseSwagger(updateSwagger(ResponseParkingDto, controllerName))
   update(
-    @Param('id') id: number,
+    @Param('id', PositiveIntPipe) id: number,
     @Body() updateparkingDto: UpdateParkingDto,
     @Request() req: RequestWithUser,
   ): Promise<ResponseParkingDto | null | undefined> {
@@ -122,7 +123,7 @@ export class ParkingsController {
   @HttpCode(HttpStatus.ACCEPTED)
   @ApiResponseSwagger(deleteSwagger(ResponseParkingDto, controllerName))
   softDelete(
-    @Param('id') id: number,
+    @Param('id', PositiveIntPipe) id: number,
     @Request() req: RequestWithUser,
   ): Promise<ResponseParkingDto | null | undefined> {
     return this.parkingsService.softDelete(id, {

@@ -28,6 +28,7 @@ import { Roles } from 'src/_shared/auth/domain/roles.decorator';
 import { UpdateVehicleDetailDto } from '../domain/update-vehicleDetail.dto';
 import { CreateVehicleDetailDto } from '../domain/create-vehicleDetail.dto';
 import { VehicleDetailsService } from '../application/vehicleDetails.service';
+import { PositiveIntPipe } from 'src/_shared/domain/pipes/positive-int.pipe';
 
 const controllerName = 'VehicleDetails';
 
@@ -89,7 +90,7 @@ export class VehicleDetailsController {
   @HttpCode(HttpStatus.OK)
   @ApiResponseSwagger(findOneSwagger(ResponseVehicleDetailDto, controllerName))
   findOneById(
-    @Param('id') id: number,
+    @Param('id', PositiveIntPipe) id: number,
     @Request() req: RequestWithUser,
   ): Promise<ResponseVehicleDetailDto | null | undefined> {
     return this.vehicleDetailsService.findOneById(id, req.user.parkingId, true);
@@ -105,7 +106,7 @@ export class VehicleDetailsController {
   @HttpCode(HttpStatus.ACCEPTED)
   @ApiResponseSwagger(updateSwagger(ResponseVehicleDetailDto, controllerName))
   update(
-    @Param('id') id: number,
+    @Param('id', PositiveIntPipe) id: number,
     @Body() updatevehicleDetailDto: UpdateVehicleDetailDto,
     @Request() req: RequestWithUser,
   ): Promise<ResponseVehicleDetailDto | null | undefined> {
@@ -124,7 +125,7 @@ export class VehicleDetailsController {
   @HttpCode(HttpStatus.ACCEPTED)
   @ApiResponseSwagger(deleteSwagger(ResponseVehicleDetailDto, controllerName))
   softDelete(
-    @Param('id') id: number,
+    @Param('id', PositiveIntPipe) id: number,
     @Request() req: RequestWithUser,
   ): Promise<ResponseVehicleDetailDto | null | undefined> {
     return this.vehicleDetailsService.softDelete(id, {

@@ -28,6 +28,7 @@ import { RequestWithUser } from 'src/_shared/domain/type/requestWithUser.type';
 import { PaginationRoleDto } from '../domain/pagination-role.dto';
 import { IsNull } from 'typeorm';
 import { Roles } from 'src/_shared/auth/domain/roles.decorator';
+import { PositiveIntPipe } from 'src/_shared/domain/pipes/positive-int.pipe';
 
 const controllerName = 'Roles';
 
@@ -87,7 +88,7 @@ export class RolesController {
   @HttpCode(HttpStatus.OK)
   @ApiResponseSwagger(findOneSwagger(ResponseRoleDto, controllerName))
   findOneById(
-    @Param('id') id: number,
+    @Param('id', PositiveIntPipe) id: number,
     @Request() req: RequestWithUser,
   ): Promise<ResponseRoleDto | null | undefined> {
     return this.rolesService.findOneById(id, req.user.parkingId, true);
@@ -103,7 +104,7 @@ export class RolesController {
   @HttpCode(HttpStatus.ACCEPTED)
   @ApiResponseSwagger(updateSwagger(ResponseRoleDto, controllerName))
   update(
-    @Param('id') id: number,
+    @Param('id', PositiveIntPipe) id: number,
     @Body() updateRoleDto: UpdateRoleDto,
     @Request() req: RequestWithUser,
   ): Promise<ResponseRoleDto | null | undefined> {
@@ -122,7 +123,7 @@ export class RolesController {
   @HttpCode(HttpStatus.ACCEPTED)
   @ApiResponseSwagger(deleteSwagger(ResponseRoleDto, controllerName))
   softDelete(
-    @Param('id') id: number,
+    @Param('id', PositiveIntPipe) id: number,
     @Request() req: RequestWithUser,
   ): Promise<ResponseRoleDto | null | undefined> {
     return this.rolesService.softDelete(id, {

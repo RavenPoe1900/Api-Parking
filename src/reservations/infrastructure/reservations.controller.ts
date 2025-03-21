@@ -36,6 +36,7 @@ import { CreateReservationDto } from '../domain/create-reservation.dto';
 import { Reservation } from '../domain/reservation.entity';
 import { GetStatusSummaryDto } from '../domain/getStatusSummary.dto';
 import { ReservationStatus } from '../domain/reservationStatus.enum';
+import { PositiveIntPipe } from 'src/_shared/domain/pipes/positive-int.pipe';
 
 const controllerName = 'reservations';
 
@@ -104,7 +105,7 @@ export class ReservationsController {
   @HttpCode(HttpStatus.OK)
   @ApiResponseSwagger(findOneSwagger(ResponseReservationDto, controllerName))
   findOneById(
-    @Param('id') id: number,
+    @Param('id', PositiveIntPipe) id: number,
     @Request() req: RequestWithUser,
   ): Promise<ResponseReservationDto | null | undefined> {
     return this.reservationsService.findOneById(id, req.user.parkingId, true);
@@ -120,7 +121,7 @@ export class ReservationsController {
   @HttpCode(HttpStatus.ACCEPTED)
   @ApiResponseSwagger(updateSwagger(ResponseReservationDto, controllerName))
   update(
-    @Param('id') id: number,
+    @Param('id', PositiveIntPipe) id: number,
     @Body() updatereservationDto: UpdateReservationDto,
     @Request() req: RequestWithUser,
   ): Promise<ResponseReservationDto | null | undefined> {
@@ -143,7 +144,7 @@ export class ReservationsController {
   @HttpCode(HttpStatus.OK)
   @ApiResponseSwagger(updateSwagger(ResponseReservationDto, controllerName))
   updateReservationStatus(
-    @Param('id') id: number,
+    @Param('id', PositiveIntPipe) id: number,
     @Body() updateReservationStatusDto: UpdateReservationStatusDto,
     @Request() req: RequestWithUser,
   ) {
@@ -166,7 +167,7 @@ export class ReservationsController {
   @HttpCode(HttpStatus.ACCEPTED)
   @ApiResponseSwagger(deleteSwagger(ResponseReservationDto, controllerName))
   softDelete(
-    @Param('id') id: number,
+    @Param('id', PositiveIntPipe) id: number,
     @Request() req: RequestWithUser,
   ): Promise<ResponseReservationDto | null | undefined> {
     return this.reservationsService.softDelete(id, {

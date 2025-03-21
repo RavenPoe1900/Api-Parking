@@ -28,6 +28,7 @@ import { RequestWithUser } from 'src/_shared/domain/type/requestWithUser.type';
 import { PaginationUserDto } from '../domain/pagination-user.dto';
 import { IsNull } from 'typeorm';
 import { Roles } from 'src/_shared/auth/domain/roles.decorator';
+import { PositiveIntPipe } from 'src/_shared/domain/pipes/positive-int.pipe';
 
 const controllerName = 'Users';
 
@@ -93,7 +94,7 @@ export class UsersController {
   @HttpCode(HttpStatus.OK)
   @ApiResponseSwagger(findOneSwagger(ResponseUserDto, controllerName))
   findOneById(
-    @Param('id') id: number,
+    @Param('id', PositiveIntPipe) id: number,
     @Request() req: RequestWithUser,
   ): Promise<ResponseUserDto | null | undefined> {
     return this.usersService.findOneById(id, req.user.parkingId, true);
@@ -110,7 +111,7 @@ export class UsersController {
   @HttpCode(HttpStatus.ACCEPTED)
   @ApiResponseSwagger(updateSwagger(ResponseUserDto, controllerName))
   update(
-    @Param('id') id: number,
+    @Param('id', PositiveIntPipe) id: number,
     @Body() updateUserDto: UpdateUserDto,
     @Request() req: RequestWithUser,
   ): Promise<ResponseUserDto | null | undefined> {
@@ -130,7 +131,7 @@ export class UsersController {
   @HttpCode(HttpStatus.ACCEPTED)
   @ApiResponseSwagger(deleteSwagger(ResponseUserDto, controllerName))
   softDelete(
-    @Param('id') id: number,
+    @Param('id', PositiveIntPipe) id: number,
     @Request() req: RequestWithUser,
   ): Promise<ResponseUserDto | null | undefined> {
     return this.usersService.softDelete(id, {
