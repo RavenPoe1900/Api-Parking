@@ -18,7 +18,6 @@ import { IBaseT } from '../domain/interface/baseT.interface';
 import { IUserParking } from '../domain/interface/userParking.interface';
 import { LogsService } from 'src/logs/application/logs.service';
 import { CreateLogDto } from 'src/logs/domain/create-logs.dto';
-import { Reservation } from 'src/reservations/domain/reservation.entity';
 
 @Injectable()
 export abstract class BaseService<T extends IBaseT> {
